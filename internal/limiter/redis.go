@@ -53,35 +53,53 @@ func (r *RedisRateLimiter) Allow(identifier string) (bool, time.Duration, error)
 	blockKey := fmt.Sprintf("block:%s", identifier)
 	limitKey := fmt.Sprintf("rate:%s", identifier)
 
-	// Verifica se está bloqueado
-	blocked, err := r.client.TTL(r.ctx, blockKey).Result()
-	if err != nil {
-		return false, 0, err
-	}
-	if blocked > 0 {
-		return false, blocked, nil
-	}
+	script := redis.NewScript(`
+		local blockKey = KEYS[1]
+		local rateKey = KEYS[2]
+		local limit = tonumber(ARGV[1])
+		local blockDuration = tonumber(ARGV[2])
 
-	// Determina o limite
+		if redis.call("TTL", blockKey) > 0 then
+			return {0, redis.call("TTL", blockKey)}
+		end
+
+		local current = redis.call("INCR", rateKey)
+		if current == 1 then
+			redis.call("EXPIRE", rateKey, blockDuration)
+		end
+
+		if current > limit then
+			redis.call("SET", blockKey, "1", "EX", blockDuration)
+			return {0, blockDuration}
+		end
+
+		return {1, 0}
+	`)
+
 	limit := r.defaultLimit
-	if tokenLimit, exists := r.tokenLimits[identifier]; exists {
-		limit = tokenLimit
+	if val, ok := r.tokenLimits[identifier]; ok {
+		limit = val
 	}
 
-	// Incrementa contagem
-	count, err := r.client.Incr(r.ctx, limitKey).Result()
+	res, err := script.Run(r.ctx, r.client, []string{blockKey, limitKey},
+		limit,
+		int(r.blockDuration.Seconds()),
+	).Result()
+
 	if err != nil {
+		fmt.Println("❌ Redis script error:", err)
 		return false, 0, err
 	}
-	if count == 1 {
-		r.client.Expire(r.ctx, limitKey, time.Second)
+
+	data := res.([]interface{})
+	allowed := data[0].(int64) == 1
+	retryAfter := time.Duration(data[1].(int64)) * time.Second
+
+	if allowed {
+		fmt.Printf("🔁 Incrementando %s (limite: %d)\n", limitKey, limit)
+	} else {
+		fmt.Printf("⛔ BLOQUEADO %s (aguarde %v)\n", identifier, retryAfter)
 	}
 
-	if count > int64(limit) {
-		// Bloqueia o acesso
-		r.client.Set(r.ctx, blockKey, "1", r.blockDuration)
-		return false, r.blockDuration, nil
-	}
-
-	return true, 0, nil
+	return allowed, retryAfter, nil
 }

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net"
 	"strings"
 
@@ -33,6 +34,8 @@ func RateLimitMiddleware(limiter limiter.RateLimiter) gin.HandlerFunc {
 		if identifier == "" {
 			identifier = getClientIP(c)
 		}
+
+		fmt.Println("🔍 Identifier:", identifier)
 
 		allowed, retryAfter, err := limiter.Allow(identifier)
 		if err != nil || !allowed {
