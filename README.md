@@ -1,33 +1,33 @@
-# 🚦 Rate Limiter em Go (IP e Token)
+# 🚦 Rate Limiter in Go (IP and Token)
 
-Este projeto implementa um rate limiter configurável em Go, capaz de controlar requisições por segundo com base em endereço IP ou token de acesso enviado via header \`API_KEY\`. A lógica é baseada em middleware, utilizando o framework Gin e armazenando dados no Redis. Caso um token esteja presente, suas configurações de limitação devem sobrepor as do IP. O projeto está preparado para funcionar via Docker e possui uma estratégia desacoplada de armazenamento, podendo futuramente utilizar outra solução além do Redis.
+This project implements a configurable rate limiter in Go, capable of controlling requests per second based on the IP address or an access token sent via the `API_KEY` header. The logic is based on middleware, using the Gin framework and storing data in Redis. If a token is present, its rate limiting configurations must override those of the IP. The project is prepared to run via Docker and features a decoupled storage strategy, allowing for the future use of other solutions besides Redis.
 
-## 🧱 Estrutura do Projeto
+## 🧱 Project Structure
 
-O projeto está organizado da seguinte forma:
+The project is organized as follows:
 
-- \`cmd/server/\`: ponto de entrada da aplicação
-- \`internal/config/\`: leitura de variáveis de ambiente
-- \`internal/limiter/\`: lógica de limitação e abstração com Redis
-- \`internal/middleware/\`: middleware de rate limiting para o Gin
-- \`test/\`: testes automatizados
-- \`Dockerfile\` e \`docker-compose.yml\`: orquestração com Redis
-- \`.env\`: configurações de limitação
-- \`README.md\`: documentação
+- `cmd/server/`: application entry point
+- `internal/config/`: environment variable reading
+- `internal/limiter/`: limiting logic and Redis abstraction
+- `internal/middleware/`: rate limiting middleware for Gin
+- `test/`: automated tests
+- `Dockerfile` and `docker-compose.yml`: orchestration with Redis
+- `.env`: limiting configurations
+- `README.md`: documentation
 
-## 🚀 Como executar a aplicação
+## 🚀 How to run the application
 
-🐳 Com Docker instalado, basta executar o seguinte comando:
+🐳 With Docker installed, simply run the following command:
 
 \`\`\`bash
 docker-compose up --build
 \`\`\`
 
-A aplicação ficará disponível em \`http://localhost:8080\` e o Redis será iniciado automaticamente em \`localhost:6379\`.
+The application will be available at `http://localhost:8080` and Redis will automatically start at `localhost:6379`.
 
-## ⚙️ Configuração via .env
+## ⚙️ Configuration via .env
 
-A aplicação pode ser configurada por variáveis de ambiente no arquivo \`.env\`, conforme exemplo abaixo:
+The application can be configured via environment variables in the `.env` file, as shown in the example below:
 
 \`\`\`env
 REDIS_HOST=localhost:6379
@@ -37,55 +37,55 @@ TOKEN_RATE_LIMIT=10
 TOKEN_BLOCK_DURATION=300
 \`\`\`
 
-Essas configurações definem limites por IP (5 requisições por segundo) e por token (10 requisições por segundo). Caso o limite seja excedido, o IP ou token será bloqueado por 300 segundos (5 minutos). A lógica do token se sobrepõe à do IP.
+These configurations define limits per IP (5 requests per second) and per token (10 requests per second). If the limit is exceeded, the IP or token will be blocked for 300 seconds (5 minutes). The token logic overrides the IP logic.
 
-## 🧪 Testes Automatizados
+## 🧪 Automated Tests
 
-Os testes automatizados validam os limites por IP e por token. Para executá-los, com Redis rodando, utilize:
+The automated tests validate the limits per IP and per token. To run them, with Redis running, use:
 
 \`\`\`bash
 go test -v ./...
 \`\`\`
 
-Ou para um pacote específico:
+Or for a specific package:
 
 \`\`\`bash
 go test -v ./internal/middleware
 \`\`\`
 
-## 🧪 Como testar manualmente
+## 🧪 How to test manually
 
-Você pode usar \`curl\` para testar a API com ou sem token. Exemplos:
+You can use `curl` to test the API with or without a token. Examples:
 
-Requisição com token:
+Request with token:
 
 \`\`\`bash
 curl -H "API_KEY: abc123" http://localhost:8080
 \`\`\`
 
-Requisição sem token (usa o IP como chave de limitação):
+Request without token (uses the IP as the limiting key):
 
 \`\`\`bash
 curl http://localhost:8080
 \`\`\`
 
-Caso o limite seja excedido, a resposta será:
+If the limit is exceeded, the response will be:
 
 - **Status**: 429 Too Many Requests
-- **Mensagem**: \`you have reached the maximum number of requests or actions allowed within a certain time frame\`
+- **Message**: `you have reached the maximum number of requests or actions allowed within a certain time frame`
 
-## ♻️ Estratégia de Persistência
+## ♻️ Persistence Strategy
 
-A lógica de rate limiting utiliza Redis por padrão. No entanto, uma interface chamada \`RateLimiter\` permite implementar novas estratégias de armazenamento sem impactar o restante da aplicação, bastando substituir a implementação atual (\`RedisRateLimiter\`) por outra de sua escolha, como banco relacional, memória local ou serviços externos.
+The rate limiting logic uses Redis by default. However, an interface named `RateLimiter` allows implementing new storage strategies without impacting the rest of the application, simply by replacing the current implementation (`RedisRateLimiter`) with another of your choice, such as a relational database, local memory, or external services.
 
-## 📚 Tecnologias Utilizadas
+## 📚 Technologies Used
 
 - Go (1.21+)
 - Gin Web Framework
 - Redis (via go-redis v9)
-- Docker e Docker Compose
-- Testes com pacote \`testing\` e \`httptest\`
+- Docker and Docker Compose
+- Tests with `testing` and `httptest` package
 
 ## 👨‍💻 Autor
 
-Desenvolvido como desafio técnico por vitorlrrcamargo.
+Developed as a technical challenge by vitorlrrcamargo.
