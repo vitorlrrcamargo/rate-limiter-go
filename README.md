@@ -19,9 +19,9 @@ The project is organized as follows:
 
 🐳 With Docker installed, simply run the following command:
 
-\`\`\`bash
+```bash
 docker-compose up --build
-\`\`\`
+```
 
 The application will be available at `http://localhost:8080` and Redis will automatically start at `localhost:6379`.
 
@@ -29,13 +29,13 @@ The application will be available at `http://localhost:8080` and Redis will auto
 
 The application can be configured via environment variables in the `.env` file, as shown in the example below:
 
-\`\`\`env
+```env
 REDIS_HOST=localhost:6379
 IP_RATE_LIMIT=5
 IP_BLOCK_DURATION=300
 TOKEN_RATE_LIMIT=10
 TOKEN_BLOCK_DURATION=300
-\`\`\`
+```
 
 These configurations define limits per IP (5 requests per second) and per token (10 requests per second). If the limit is exceeded, the IP or token will be blocked for 300 seconds (5 minutes). The token logic overrides the IP logic.
 
@@ -43,15 +43,15 @@ These configurations define limits per IP (5 requests per second) and per token 
 
 The automated tests validate the limits per IP and per token. To run them, with Redis running, use:
 
-\`\`\`bash
+```bash
 go test -v ./...
-\`\`\`
+```
 
 Or for a specific package:
 
-\`\`\`bash
+```bash
 go test -v ./internal/middleware
-\`\`\`
+```
 
 ## 🧪 How to test manually
 
@@ -59,15 +59,15 @@ You can use `curl` to test the API with or without a token. Examples:
 
 Request with token:
 
-\`\`\`bash
+```bash
 curl -H "API_KEY: abc123" http://localhost:8080
-\`\`\`
+```
 
 Request without token (uses the IP as the limiting key):
 
-\`\`\`bash
+```bash
 curl http://localhost:8080
-\`\`\`
+```
 
 If the limit is exceeded, the response will be:
 
